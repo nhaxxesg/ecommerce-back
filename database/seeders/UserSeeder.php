@@ -2,38 +2,63 @@
 
 namespace Database\Seeders;
 
-use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
+use App\Models\User;
 
 class UserSeeder extends Seeder
 {
+    /**
+     * Run the database seeds.
+     */
     public function run(): void
     {
-        // Create test client
+        // Crear un usuario cliente de ejemplo
         User::create([
-            'name' => 'Cliente Test',
-            'email' => 'cliente@test.com',
-            'password' => Hash::make('password'),
+            'name' => 'Juan Pérez',
+            'email' => 'cliente@demo.com',
+            'password' => Hash::make('password123'),
             'role' => 'client',
             'phone' => '987654321',
-            'address' => 'Av. Lima 123, Lima, Perú',
+            'address' => 'Av. Principal 123, Lima',
         ]);
 
-        // Create test owner
+        // Crear usuarios propietarios de restaurantes
         User::create([
-            'name' => 'Dueño Test',
-            'email' => 'dueno@test.com',
-            'password' => Hash::make('password'),
+            'name' => 'María García',
+            'email' => 'pizza@demo.com',
+            'password' => Hash::make('password123'),
             'role' => 'owner',
             'phone' => '987654322',
-            'address' => 'Av. Arequipa 456, Lima, Perú',
+            'address' => 'Av. Libertad 456, Lima',
         ]);
 
-        // Create additional clients
-        User::factory(5)->create(['role' => 'client']);
-        
-        // Create additional owners
-        User::factory(3)->create(['role' => 'owner']);
+        User::create([
+            'name' => 'Carlos Rodríguez',
+            'email' => 'burger@demo.com',
+            'password' => Hash::make('password123'),
+            'role' => 'owner',
+            'phone' => '987654323',
+            'address' => 'Calle Comercio 789, Lima',
+        ]);
+
+        User::create([
+            'name' => 'Ana Sánchez',
+            'email' => 'sushi@demo.com',
+            'password' => Hash::make('password123'),
+            'role' => 'owner',
+            'phone' => '987654324',
+            'address' => 'Av. Central 101, Lima',
+        ]);
+
+        // Crear más clientes de ejemplo
+        User::create([
+            'name' => 'Pedro López',
+            'email' => 'pedro@demo.com',
+            'password' => Hash::make('password123'),
+            'role' => 'client',
+            'phone' => '987654325',
+            'address' => 'Jr. Los Olivos 202, Lima',
+        ]);
     }
 } 
