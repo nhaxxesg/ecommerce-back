@@ -50,3 +50,8 @@ Route::middleware('auth:sanctum')->group(function () {
     // Restaurant orders (for owners)
     Route::get('/restaurant-orders', [OrderController::class, 'restaurantOrders']);
 }); 
+
+// MercadoPago Routes
+Route::get('/mercadopago/config', [MercadoPagoController::class, 'getConfig']);
+Route::post('/mercadopago/create-preference', [MercadoPagoController::class, 'createPreference']);
+Route::post('/mercadopago/webhook', [MercadoPagoController::class, 'handleWebhook'])->name('api.mercadopago.webhook'); 
