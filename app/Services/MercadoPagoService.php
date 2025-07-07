@@ -103,9 +103,12 @@ class MercadoPagoService
             // Asegurarnos de que las URLs no terminen en /
             $frontendUrl = rtrim($frontendUrl, '/');
 
+            // Construir la URL del webhook manualmente
+            $webhookUrl = config('app.url') . '/api/mercadopago/webhook';
+
             Log::error('Configurando URLs de preferencia', [
                 'frontend_url' => $frontendUrl,
-                'webhook_url' => route('api.mercadopago.webhook'),
+                'webhook_url' => $webhookUrl,
                 'success_url' => $frontendUrl . '/payment/success',
                 'failure_url' => $frontendUrl . '/payment/failure',
                 'pending_url' => $frontendUrl . '/payment/pending'
@@ -118,7 +121,7 @@ class MercadoPagoService
                     'failure' => $frontendUrl . '/payment/failure',
                     'pending' => $frontendUrl . '/payment/pending'
                 ],
-                "notification_url" => route('api.mercadopago.webhook'),
+                "notification_url" => $webhookUrl,
                 "statement_descriptor" => "Comida Express",
                 "external_reference" => uniqid("CE-"), // CE = Comida Express
                 "expires" => false,
@@ -211,5 +214,10 @@ class MercadoPagoService
         }
         
         return null;
+    }
+
+    protected function getNotificationUrl(): string
+    {
+        return route('mercadopago.webhook');
     }
 } 

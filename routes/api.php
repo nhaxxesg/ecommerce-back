@@ -7,14 +7,18 @@ use App\Http\Controllers\Api\RestaurantController;
 use App\Http\Controllers\Api\FoodController;
 use App\Http\Controllers\Api\OrderController;
 use App\Http\Controllers\Api\MercadoPagoController;
+use App\Http\Controllers\Api\MercadoPagoWebhookController;
 
 // Public routes
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
 
-// MercadoPago webhook (public)
-Route::post('/mercadopago/webhook', [MercadoPagoController::class, 'webhook'])->name('mercadopago.webhook');
+// MercadoPago Routes (public)
 Route::get('/mercadopago/config', [MercadoPagoController::class, 'getConfig']);
+Route::post('/mercadopago/create-preference', [MercadoPagoController::class, 'createPreference']);
+Route::post('/mercadopago/webhook', [MercadoPagoWebhookController::class, 'handle'])
+    ->name('mercadopago.webhook')
+    ->withoutMiddleware(['auth:sanctum']);
 
 // Public restaurant and food routes
 Route::get('/restaurants', [RestaurantController::class, 'index']);
@@ -50,8 +54,3 @@ Route::middleware('auth:sanctum')->group(function () {
     // Restaurant orders (for owners)
     Route::get('/restaurant-orders', [OrderController::class, 'restaurantOrders']);
 }); 
-
-// MercadoPago Routes
-Route::get('/mercadopago/config', [MercadoPagoController::class, 'getConfig']);
-Route::post('/mercadopago/create-preference', [MercadoPagoController::class, 'createPreference']);
-Route::post('/mercadopago/webhook', [MercadoPagoController::class, 'handleWebhook'])->name('api.mercadopago.webhook'); 

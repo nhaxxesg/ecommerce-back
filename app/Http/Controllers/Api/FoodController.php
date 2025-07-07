@@ -5,10 +5,19 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Food;
 use App\Models\Restaurant;
+use App\Services\ImageService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class FoodController extends Controller
 {
+    protected $imageService;
+
+    public function __construct(ImageService $imageService)
+    {
+        $this->imageService = $imageService;
+    }
+
     public function index(Request $request, Restaurant $restaurant)
     {
         $query = $restaurant->foods();
@@ -42,20 +51,37 @@ class FoodController extends Controller
             'description' => 'nullable|string',
             'price' => 'required|numeric|min:0',
             'category' => 'nullable|string|max:100',
-            'image_url' => 'nullable|url',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
             'preparation_time' => 'nullable|integer|min:1',
         ]);
 
-        $food = $restaurant->foods()->create([
-            'name' => $request->name,
-            'description' => $request->description,
-            'price' => $request->price,
-            'category' => $request->category,
-            'image_url' => $request->image_url,
-            'preparation_time' => $request->preparation_time ?? 30,
-        ]);
+        try {
+            // Procesar la imagen si se proporcionó una
+            $imagePath = null;
+            if ($request->hasFile('image')) {
+                $imagePath = $this->imageService->uploadImage($request->file('image'), 'foods');
+            }
 
-        return response()->json($food->load('restaurant'), 201);
+            $food = $restaurant->foods()->create([
+                'name' => $request->name,
+                'description' => $request->description,
+                'price' => $request->price,
+                'category' => $request->category,
+                'image_url' => $imagePath ? url(Storage::url($imagePath)) : null,
+                'preparation_time' => $request->preparation_time ?? 30,
+            ]);
+
+            return response()->json($food->load('restaurant'), 201);
+        } catch (\Exception $e) {
+            // Si hubo un error y se subió una imagen, eliminarla
+            if (isset($imagePath)) {
+                $this->imageService->deleteImage($imagePath);
+            }
+            
+            return response()->json([
+                'message' => 'Error al crear el producto: ' . $e->getMessage()
+            ], 422);
+        }
     }
 
     public function update(Request $request, Food $food)
@@ -69,23 +95,55 @@ class FoodController extends Controller
             'description' => 'nullable|string',
             'price' => 'sometimes|required|numeric|min:0',
             'category' => 'nullable|string|max:100',
-            'image_url' => 'nullable|url',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
             'is_available' => 'sometimes|boolean',
             'preparation_time' => 'sometimes|integer|min:1',
         ]);
 
-        $food->update($request->only([
-            'name', 'description', 'price', 'category', 
-            'image_url', 'is_available', 'preparation_time'
-        ]));
+        try {
+            $updateData = $request->only([
+                'name', 'description', 'price', 'category', 
+                'is_available', 'preparation_time'
+            ]);
 
-        return response()->json($food->load('restaurant'));
+            // Procesar la nueva imagen si se proporcionó una
+            if ($request->hasFile('image')) {
+                // Eliminar la imagen anterior si existe
+                if ($food->image_url) {
+                    $oldPath = str_replace('/storage/', '', parse_url($food->image_url, PHP_URL_PATH));
+                    $this->imageService->deleteImage($oldPath);
+                }
+
+                // Subir la nueva imagen
+                $imagePath = $this->imageService->uploadImage($request->file('image'), 'foods');
+                $updateData['image_url'] = url(Storage::url($imagePath));
+            }
+
+            $food->update($updateData);
+
+            return response()->json($food->load('restaurant'));
+        } catch (\Exception $e) {
+            // Si hubo un error y se subió una imagen nueva, eliminarla
+            if (isset($imagePath)) {
+                $this->imageService->deleteImage($imagePath);
+            }
+            
+            return response()->json([
+                'message' => 'Error al actualizar el producto: ' . $e->getMessage()
+            ], 422);
+        }
     }
 
     public function destroy(Food $food, Request $request)
     {
         if ($food->restaurant->owner_id !== $request->user()->id) {
             return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        // Eliminar la imagen si existe
+        if ($food->image_url) {
+            $path = str_replace('/storage/', '', parse_url($food->image_url, PHP_URL_PATH));
+            $this->imageService->deleteImage($path);
         }
 
         $food->delete();
