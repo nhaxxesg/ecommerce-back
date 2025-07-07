@@ -43,4 +43,7 @@ return [
 
     'frontend_url' => env('FRONTEND_URL', 'http://localhost:5173'),
 
+    'apis_net' => [
+        'token' => env('APIS_NET_TOKEN'),
+    ],
 ];

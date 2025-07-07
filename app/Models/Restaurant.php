@@ -21,6 +21,8 @@ class Restaurant extends Model
         'closing_time',
         'image_url',
         'is_active',
+        'ruc',
+        'razon_social',
     ];
 
     protected $casts = [
