@@ -22,7 +22,6 @@ class Restaurant extends Model
         'image_url',
         'is_active',
         'ruc',
-        'razon_social',
     ];
 
     protected $casts = [

@@ -8,6 +8,7 @@ use App\Services\RucValidationService;
 use App\Services\ImageService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Log;
 
 class RestaurantController extends Controller
 {
@@ -71,9 +72,6 @@ class RestaurantController extends Controller
         ]);
 
         try {
-            // Validar RUC con la API externa
-            $rucData = $this->rucValidationService->validateRuc($request->ruc);
-
             // Procesar la imagen si se proporcionó una
             $imagePath = null;
             if ($request->hasFile('image')) {
@@ -84,7 +82,6 @@ class RestaurantController extends Controller
                 'owner_id' => $request->user()->id,
                 'name' => $request->name,
                 'ruc' => $request->ruc,
-                'razon_social' => $rucData['razonSocial'],
                 'description' => $request->description,
                 'cuisine_type' => $request->cuisine_type,
                 'address' => $request->address,
@@ -93,6 +90,10 @@ class RestaurantController extends Controller
                 'opening_time' => $request->opening_time,
                 'closing_time' => $request->closing_time,
                 'image_url' => $imagePath ? Storage::url($imagePath) : null,
+            ]);
+
+            Log::info('Restaurante creado', [
+                'restaurant' => $restaurant
             ]);
 
             return response()->json($restaurant->load('owner'), 201);
