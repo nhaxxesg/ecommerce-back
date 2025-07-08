@@ -110,7 +110,7 @@ class FoodController extends Controller
             }
             
             $path = $request->file('image')->store('foods', 'public');
-            $data['image_url'] = 'https://ecomerce.proyectoinsti.site/api/storage/' . basename($path);
+            $data['image_url'] = 'https://ecomerce.proyectoinsti.site/api/storage/app/public/' . basename($path);
         }
 
         $food->update($data);
