@@ -103,8 +103,8 @@ class MercadoPagoService
             // Asegurarnos de que las URLs no terminen en /
             $frontendUrl = rtrim($frontendUrl, '/');
 
-            // Construir la URL del webhook manualmente
-            $webhookUrl = config('app.url') . '/api/mercadopago/webhook';
+            // Construir la URL del webhook usando la misma base que el frontend pero sin el puerto
+            $webhookUrl = preg_replace('/:\d+$/', '', parse_url($frontendUrl, PHP_URL_SCHEME) . '://' . parse_url($frontendUrl, PHP_URL_HOST)) . '/api/mercadopago/webhook';
 
             Log::error('Configurando URLs de preferencia', [
                 'frontend_url' => $frontendUrl,
@@ -137,6 +137,18 @@ class MercadoPagoService
                 Log::error('Respuesta de MercadoPago', [
                     'raw_response' => json_encode($preference)
                 ]);
+
+                // Seleccionar la URL correcta según el modo
+                $mode = config('services.mercadopago.mode');
+                $checkoutUrl = $mode === 'sandbox' ? $preference->sandbox_init_point : $preference->init_point;
+
+                Log::error('Preferencia creada exitosamente', [
+                    'init_point' => $checkoutUrl,
+                    'mode' => $mode
+                ]);
+                
+                return $checkoutUrl;
+
             } catch (\MercadoPago\Exceptions\MPApiException $e) {
                 Log::error('Error de API de MercadoPago', [
                     'message' => $e->getMessage(),
