@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Models\Food;
 use App\Models\Restaurant;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Config;
 
 class FoodController extends Controller
 {
@@ -42,18 +44,24 @@ class FoodController extends Controller
             'description' => 'nullable|string',
             'price' => 'required|numeric|min:0',
             'category' => 'nullable|string|max:100',
-            'image_url' => 'nullable|url',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
             'preparation_time' => 'nullable|integer|min:1',
         ]);
 
-        $food = $restaurant->foods()->create([
+        $data = [
             'name' => $request->name,
             'description' => $request->description,
             'price' => $request->price,
             'category' => $request->category,
-            'image_url' => $request->image_url,
             'preparation_time' => $request->preparation_time ?? 30,
-        ]);
+        ];
+
+        if ($request->hasFile('image')) {
+            $path = $request->file('image')->store('foods', 'public');
+            $data['image_url'] = Config::get('app.url') . Storage::url($path);
+        }
+
+        $food = $restaurant->foods()->create($data);
 
         return response()->json($food->load('restaurant'), 201);
     }
@@ -69,15 +77,27 @@ class FoodController extends Controller
             'description' => 'nullable|string',
             'price' => 'sometimes|required|numeric|min:0',
             'category' => 'nullable|string|max:100',
-            'image_url' => 'nullable|url',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
             'is_available' => 'sometimes|boolean',
             'preparation_time' => 'sometimes|integer|min:1',
         ]);
 
-        $food->update($request->only([
+        $data = $request->only([
             'name', 'description', 'price', 'category', 
-            'image_url', 'is_available', 'preparation_time'
-        ]));
+            'is_available', 'preparation_time'
+        ]);
+
+        if ($request->hasFile('image')) {
+            if ($food->image_url) {
+                $oldPath = str_replace('/storage/', '', parse_url($food->image_url, PHP_URL_PATH));
+                Storage::disk('public')->delete($oldPath);
+            }
+            
+            $path = $request->file('image')->store('foods', 'public');
+            $data['image_url'] = Config::get('app.url') . Storage::url($path);
+        }
+
+        $food->update($data);
 
         return response()->json($food->load('restaurant'));
     }
