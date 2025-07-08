@@ -8,10 +8,7 @@ use App\Models\Restaurant;
 use App\Services\ImageService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
-<<<<<<< HEAD
 use Illuminate\Support\Facades\Config;
-=======
->>>>>>> 2733e459c53be31b16d11e5ea89831f812f248a2
 
 class FoodController extends Controller
 {
@@ -59,51 +56,31 @@ class FoodController extends Controller
             'preparation_time' => 'nullable|integer|min:1',
         ]);
 
-<<<<<<< HEAD
-        $data = [
-            'name' => $request->name,
-            'description' => $request->description,
-            'price' => $request->price,
-            'category' => $request->category,
-            'preparation_time' => $request->preparation_time ?? 30,
-        ];
-
         if ($request->hasFile('image')) {
             $path = $request->file('image')->store('foods', 'public');
             $data['image_url'] = Config::get('app.url') . Storage::url($path);
         }
 
-        $food = $restaurant->foods()->create($data);
-=======
-        try {
-            // Procesar la imagen si se proporcionó una
-            $imagePath = null;
-            if ($request->hasFile('image')) {
-                $imagePath = $this->imageService->uploadImage($request->file('image'), 'foods');
-            }
->>>>>>> 2733e459c53be31b16d11e5ea89831f812f248a2
+        $food = $restaurant->foods()->create([
+            'name' => $request->name,
+            'description' => $request->description,
+            'price' => $request->price,
+            'category' => $request->category,
+            'image_url' => $imagePath ? url(Storage::url($imagePath)) : null,
+            'preparation_time' => $request->preparation_time ?? 30,
+        ]);
 
-            $food = $restaurant->foods()->create([
-                'name' => $request->name,
-                'description' => $request->description,
-                'price' => $request->price,
-                'category' => $request->category,
-                'image_url' => $imagePath ? url(Storage::url($imagePath)) : null,
-                'preparation_time' => $request->preparation_time ?? 30,
-            ]);
-
-            return response()->json($food->load('restaurant'), 201);
-        } catch (\Exception $e) {
-            // Si hubo un error y se subió una imagen, eliminarla
-            if (isset($imagePath)) {
-                $this->imageService->deleteImage($imagePath);
-            }
-            
-            return response()->json([
-                'message' => 'Error al crear el producto: ' . $e->getMessage()
-            ], 422);
-        }
+        return response()->json($food->load('restaurant'), 201);
+        
     }
+    /**
+     * Update the specified resource in storage.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  \App\Models\Food  $food
+     * @return \Illuminate\Http\Response
+     */
+    
 
     public function update(Request $request, Food $food)
     {
@@ -121,7 +98,6 @@ class FoodController extends Controller
             'preparation_time' => 'sometimes|integer|min:1',
         ]);
 
-<<<<<<< HEAD
         $data = $request->only([
             'name', 'description', 'price', 'category', 
             'is_available', 'preparation_time'
@@ -138,40 +114,24 @@ class FoodController extends Controller
         }
 
         $food->update($data);
-=======
-        try {
-            $updateData = $request->only([
-                'name', 'description', 'price', 'category', 
-                'is_available', 'preparation_time'
-            ]);
->>>>>>> 2733e459c53be31b16d11e5ea89831f812f248a2
 
-            // Procesar la nueva imagen si se proporcionó una
-            if ($request->hasFile('image')) {
-                // Eliminar la imagen anterior si existe
-                if ($food->image_url) {
-                    $oldPath = str_replace('/storage/', '', parse_url($food->image_url, PHP_URL_PATH));
-                    $this->imageService->deleteImage($oldPath);
-                }
-
-                // Subir la nueva imagen
-                $imagePath = $this->imageService->uploadImage($request->file('image'), 'foods');
-                $updateData['image_url'] = url(Storage::url($imagePath));
+        // Procesar la nueva imagen si se proporcionó una
+        if ($request->hasFile('image')) {
+            // Eliminar la imagen anterior si existe
+            if ($food->image_url) {
+                $oldPath = str_replace('/storage/', '', parse_url($food->image_url, PHP_URL_PATH));
+                $this->imageService->deleteImage($oldPath);
             }
 
-            $food->update($updateData);
-
-            return response()->json($food->load('restaurant'));
-        } catch (\Exception $e) {
-            // Si hubo un error y se subió una imagen nueva, eliminarla
-            if (isset($imagePath)) {
-                $this->imageService->deleteImage($imagePath);
-            }
-            
-            return response()->json([
-                'message' => 'Error al actualizar el producto: ' . $e->getMessage()
-            ], 422);
+            // Subir la nueva imagen
+            $imagePath = $this->imageService->uploadImage($request->file('image'), 'foods');
+            $updateData['image_url'] = url(Storage::url($imagePath));
         }
+
+        $food->update($updateData);
+
+        return response()->json($food->load('restaurant'));
+        
     }
 
     public function destroy(Food $food, Request $request)
