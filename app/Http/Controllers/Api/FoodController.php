@@ -58,7 +58,7 @@ class FoodController extends Controller
 
         if ($request->hasFile('image')) {
             $path = $request->file('image')->store('foods', 'public');
-            $data['image_url'] = Config::get('app.url') . Storage::url($path);
+            $data['image_url'] = 'https://ecomerce.proyectoinsti.site/api/storage/foods/' . basename($path);
         }
 
         $food = $restaurant->foods()->create([
@@ -66,7 +66,7 @@ class FoodController extends Controller
             'description' => $request->description,
             'price' => $request->price,
             'category' => $request->category,
-            'image_url' => $imagePath ? url(Storage::url($imagePath)) : null,
+            'image_url' => $data['image_url'] ?? null,
             'preparation_time' => $request->preparation_time ?? 30,
         ]);
 
@@ -105,30 +105,15 @@ class FoodController extends Controller
 
         if ($request->hasFile('image')) {
             if ($food->image_url) {
-                $oldPath = str_replace('/storage/', '', parse_url($food->image_url, PHP_URL_PATH));
-                Storage::disk('public')->delete($oldPath);
+                $oldPath = str_replace('https://ecomerce.proyectoinsti.site/api/storage/', '', parse_url($food->image_url, PHP_URL_PATH));
+                Storage::disk('public')->delete('foods/' . basename($oldPath));
             }
             
             $path = $request->file('image')->store('foods', 'public');
-            $data['image_url'] = Config::get('app.url') . Storage::url($path);
+            $data['image_url'] = 'https://ecomerce.proyectoinsti.site/api/storage/' . basename($path);
         }
 
         $food->update($data);
-
-        // Procesar la nueva imagen si se proporcionó una
-        if ($request->hasFile('image')) {
-            // Eliminar la imagen anterior si existe
-            if ($food->image_url) {
-                $oldPath = str_replace('/storage/', '', parse_url($food->image_url, PHP_URL_PATH));
-                $this->imageService->deleteImage($oldPath);
-            }
-
-            // Subir la nueva imagen
-            $imagePath = $this->imageService->uploadImage($request->file('image'), 'foods');
-            $updateData['image_url'] = url(Storage::url($imagePath));
-        }
-
-        $food->update($updateData);
 
         return response()->json($food->load('restaurant'));
         
