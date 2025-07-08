@@ -72,6 +72,8 @@ class RestaurantController extends Controller
         ]);
 
         try {
+            $rucData = $this->rucValidationService->validateRuc($request->ruc);
+            
             // Procesar la imagen si se proporcionó una
             $imagePath = null;
             if ($request->hasFile('image')) {
@@ -90,6 +92,7 @@ class RestaurantController extends Controller
                 'opening_time' => $request->opening_time,
                 'closing_time' => $request->closing_time,
                 'image_url' => $imagePath ? Storage::url($imagePath) : null,
+                'razon_social' => $rucData['razonSocial'],
             ]);
 
             Log::info('Restaurante creado', [
