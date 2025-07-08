@@ -7,14 +7,19 @@ use App\Http\Controllers\Api\RestaurantController;
 use App\Http\Controllers\Api\FoodController;
 use App\Http\Controllers\Api\OrderController;
 use App\Http\Controllers\Api\MercadoPagoController;
+use App\Http\Controllers\Api\MercadoPagoWebhookController;
+use App\Http\Controllers\Api\ComplaintBookController;
 
 // Public routes
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
 
-// MercadoPago webhook (public)
-Route::post('/mercadopago/webhook', [MercadoPagoController::class, 'webhook'])->name('mercadopago.webhook');
+// MercadoPago Routes (public)
 Route::get('/mercadopago/config', [MercadoPagoController::class, 'getConfig']);
+Route::post('/mercadopago/create-preference', [MercadoPagoController::class, 'createPreference']);
+Route::post('/mercadopago/webhook', [MercadoPagoWebhookController::class, 'handle'])
+    ->name('mercadopago.webhook')
+    ->withoutMiddleware(['auth:sanctum']);
 
 // Public restaurant and food routes
 Route::get('/restaurants', [RestaurantController::class, 'index']);
@@ -26,7 +31,10 @@ Route::get('/foods/{food}', [FoodController::class, 'show']);
 Route::middleware('auth:sanctum')->group(function () {
     // Auth routes
     Route::post('/logout', [AuthController::class, 'logout']);
-    Route::get('/user', [AuthController::class, 'user']);
+    Route::get('/me', [AuthController::class, 'me']);
+
+    // Complaint Book Route (protected)
+    Route::post('/complaint-book', [ComplaintBookController::class, 'store']);
 
     // Restaurant management (owners only)
     Route::post('/restaurants', [RestaurantController::class, 'store']);

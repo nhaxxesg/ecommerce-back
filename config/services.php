@@ -35,4 +35,16 @@ return [
         ],
     ],
 
+    'mercadopago' => [
+        'public_key' => env('MERCADOPAGO_PUBLIC_KEY'),
+        'access_token' => env('MERCADOPAGO_ACCESS_TOKEN'),
+        'webhook_secret' => env('MERCADOPAGO_WEBHOOK_SECRET'),
+        'mode' => env('MERCADOPAGO_MODE', 'sandbox'),
+    ],
+
+    'frontend_url' => env('FRONTEND_URL', 'http://localhost:5173'),
+
+    'apis_net' => [
+        'token' => env('APIS_NET_TOKEN'),
+    ],
 ];
