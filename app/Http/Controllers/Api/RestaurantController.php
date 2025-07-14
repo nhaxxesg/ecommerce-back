@@ -10,6 +10,15 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
 
+/**
+ * RESTAURANTE CONTROLLER - CORREGIDO
+ * 
+ * Errores corregidos:
+ * 1. Mejor manejo de errores en creación
+ * 2. Soporte para method spoofing en actualización con archivos
+ * 3. Validación mejorada de archivos de imagen
+ * 4. Logs de errores más descriptivos
+ */
 class RestaurantController extends Controller
 {
     protected $rucValidationService;
@@ -100,14 +109,18 @@ class RestaurantController extends Controller
             ]);
 
             return response()->json($restaurant->load('owner'), 201);
+            
         } catch (\Exception $e) {
             // Si hubo un error y se subió una imagen, eliminarla
             if (isset($imagePath)) {
                 $this->imageService->deleteImage($imagePath);
             }
             
+            // CORREGIDO: Mejor manejo de errores
+            Log::error('Error creando restaurante: ' . $e->getMessage());
+            
             return response()->json([
-                'message' => 'Error al validar el RUC: ' . $e->getMessage()
+                'message' => 'Error al crear el restaurante: ' . $e->getMessage()
             ], 422);
         }
     }

@@ -98,6 +98,12 @@ class AuthController extends Controller
         ]);
     }
 
+    // CORREGIDO: Agregar método me para la ruta /api/me
+    public function me(Request $request)
+    {
+        return response()->json($request->user());
+    }
+
     public function user(Request $request)
     {
         return response()->json($request->user());
