@@ -10,6 +10,15 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Config;
 
+/**
+ * FOOD CONTROLLER - CORREGIDO
+ * 
+ * Errores corregidos:
+ * 1. URLs hardcodeadas reemplazadas por Storage::url() dinámico
+ * 2. Lógica mejorada para eliminar imágenes anteriores
+ * 3. Compatibilidad con desarrollo local y producción
+ * 4. Uso correcto del servicio Storage de Laravel
+ */
 class FoodController extends Controller
 {
     protected $imageService;
@@ -57,8 +66,9 @@ class FoodController extends Controller
         ]);
 
         if ($request->hasFile('image')) {
+            // CORREGIDO: Usar Storage::url() en lugar de URL hardcodeada
             $path = $request->file('image')->store('foods', 'public');
-            $data['image_url'] = 'https://ecomerce.proyectoinsti.site/api/storage/foods/' . basename($path);
+            $data['image_url'] = Storage::url($path);
         }
 
         $food = $restaurant->foods()->create([
@@ -105,12 +115,14 @@ class FoodController extends Controller
 
         if ($request->hasFile('image')) {
             if ($food->image_url) {
-                $oldPath = str_replace('https://ecomerce.proyectoinsti.site/api/storage/', '', parse_url($food->image_url, PHP_URL_PATH));
-                Storage::disk('public')->delete('foods/' . basename($oldPath));
+                // CORREGIDO: Mejorar la lógica para eliminar imagen anterior
+                $oldPath = str_replace('/storage/', '', parse_url($food->image_url, PHP_URL_PATH));
+                Storage::disk('public')->delete($oldPath);
             }
             
+            // CORREGIDO: Usar Storage::url() en lugar de URL hardcodeada
             $path = $request->file('image')->store('foods', 'public');
-            $data['image_url'] = 'https://ecomerce.proyectoinsti.site/api/storage/app/public/' . basename($path);
+            $data['image_url'] = Storage::url($path);
         }
 
         $food->update($data);
